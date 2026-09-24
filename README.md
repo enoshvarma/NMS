@@ -16,7 +16,9 @@ Ahuva NMS is an auto-discovering network monitoring system. It discovers devices
 
 ## Installation
 
-Ahuva NMS is installed on the customer's server by Ahuva. Requirements: Linux (Ubuntu 22.04/24.04 or Debian 12 recommended), PHP 8.2+, MariaDB/MySQL, Python 3, Nginx or Apache, RRDtool, Net-SNMP and fping.
+Ahuva NMS is installed on the customer's server by Ahuva. Step-by-step guide: [INSTALL.md](INSTALL.md).
+
+Requirements: Ubuntu 24.04 (recommended), PHP 8.4+, MariaDB, Python 3, Nginx, RRDtool, Net-SNMP and fping.
 
 Install path, system user and service names are `/opt/librenms`, `librenms` and `librenms-scheduler`.
 
