@@ -1,0 +1,80 @@
+<?php
+
+/*
+ * LibreNMS discovery module for Eltex-MES24xx SFP Voltage
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ * @package    LibreNMS
+ * @link       https://www.librenms.org
+ *
+ * @copyright  2025 Peca Nesovanovic
+ * @author     Peca Nesovanovic <peca.nesovanovic@sattrakt.com>
+ */
+
+use App\Models\Sensor;
+use LibreNMS\OS;
+use LibreNMS\OS\EltexMes24xx;
+
+if (empty($os)) {
+    $os = OS::make($device);
+}
+
+if ($os instanceof EltexMes24xx) {
+    $map = array_flip($os->getIfIndexEntPhysicalMap()); // map ifindex -> entphy index
+    $snmpData = SnmpQuery::cache()->hideMib()->walk('ELTEX-PHY-MIB::eltexPhyTransceiverDiagnosticTable')->table(3);
+    if (! empty($snmpData)) {
+        foreach ($snmpData as $index => $typeData) {
+            foreach ($typeData as $type => $data) {
+                $eltexPhyTransceiverDiagnosticTable[$type][$index] = array_shift($data);
+            }
+        }
+    }
+
+    $divisor = 1;
+    $multiplier = 1;
+
+    foreach ($eltexPhyTransceiverDiagnosticTable['supplyVoltage'] ?? [] as $ifIndex => $data) {
+        if (! empty($data['eltexPhyTransceiverDiagnosticUnits'])) {
+            $value = $data['eltexPhyTransceiverDiagnosticCurrentValue'] / $divisor;
+            $high_limit = $data['eltexPhyTransceiverDiagnosticHighAlarmThreshold'] / 1000;
+            $high_warn_limit = $data['eltexPhyTransceiverDiagnosticHighWarningThreshold'] / 1000;
+            $low_warn_limit = $data['eltexPhyTransceiverDiagnosticLowWarningThreshold'] / 1000;
+            $low_limit = $data['eltexPhyTransceiverDiagnosticLowAlarmThreshold'] / 1000;
+            $port = PortCache::getByIfIndex($ifIndex, $device['device_id']);
+            $descr = $port?->ifName;
+            $oid = '.1.3.6.1.4.1.35265.52.1.1.3.2.1.8.' . $ifIndex . '.2.1';
+
+            app('sensor-discovery')->discover(new Sensor([
+                'poller_type' => 'snmp',
+                'sensor_class' => 'voltage',
+                'sensor_oid' => $oid,
+                'sensor_index' => 'SfpVolt' . $ifIndex,
+                'sensor_type' => 'eltex-mes24xx',
+                'sensor_descr' => 'SfpVolt-' . $descr,
+                'sensor_divisor' => $divisor,
+                'sensor_multiplier' => $multiplier,
+                'sensor_limit_low' => $low_limit,
+                'sensor_limit_low_warn' => $low_warn_limit,
+                'sensor_limit_warn' => $high_warn_limit,
+                'sensor_limit' => $high_limit,
+                'sensor_current' => $value,
+                'entPhysicalIndex' => $map[$ifIndex] ?? null,
+                'entPhysicalIndex_measured' => 'port',
+                'user_func' => null,
+                'group' => 'transceiver',
+            ]));
+        }
+    }
+}

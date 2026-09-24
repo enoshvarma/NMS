@@ -1,0 +1,25 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use LibreNMS\Interfaces\Models\Keyable;
+
+class DiskIo extends DeviceRelatedModel implements Keyable
+{
+    use HasFactory;
+    public $timestamps = false;
+    protected $table = 'ucd_diskio';
+    protected $primaryKey = 'diskio_id';
+    protected $fillable = [
+        'diskio_id',
+        'device_id',
+        'diskio_index',
+        'diskio_descr',
+    ];
+
+    public function getCompositeKey(): string
+    {
+        return "$this->diskio_index-$this->diskio_descr";
+    }
+}
