@@ -4,11 +4,10 @@
 # Ahuva NMS developed by Ahuva Enosh Varma - Elevating Tech, Empowering Lives
 # Support: Enosh Varma <varmaenosh@gmail.com>
 #
-# Usage (as root, after cloning the repository to /opt/librenms):
-#   bash /opt/librenms/install.sh              # asks a few questions
-#   bash /opt/librenms/install.sh --yes        # use defaults for everything
+# Install with one command on a fresh Ubuntu 24.04 server:
+#   curl -fsSL https://raw.githubusercontent.com/enoshvarma/NMS/main/install.sh | sudo bash
 #
-# Options:
+# Options (add after "sudo bash -s --" when using curl):
 #   --yes, -y        Do not ask questions, use defaults / environment values
 #   --no-web         Skip Nginx and PHP-FPM setup (use your own web server)
 #   --help, -h       Show this help
@@ -29,6 +28,7 @@ CRED_FILE=/root/ahuva-nms-credentials.txt
 TOTAL_STEPS=11
 ASSUME_YES=0
 SETUP_WEB=1
+REPO_URL=${AHUVA_REPO:-https://github.com/enoshvarma/NMS.git}
 
 # ---------------------------------------------------------------- output helpers
 if [ -t 1 ]; then
@@ -84,15 +84,67 @@ set_env() { # set_env KEY VALUE  (in $INSTALL_DIR/.env)
 }
 get_env() { grep -E "^$1=" "$INSTALL_DIR/.env" 2>/dev/null | tail -n1 | cut -d= -f2- || true; }
 
+usage() {
+    cat <<'EOF'
+Ahuva NMS installer
+
+Install:   curl -fsSL https://raw.githubusercontent.com/enoshvarma/NMS/main/install.sh | sudo bash
+Re-run:    sudo bash /opt/librenms/install.sh
+
+Options:
+  --yes, -y   Do not ask questions, use defaults / environment values
+  --no-web    Skip Nginx and PHP-FPM setup (use your own web server)
+  --help, -h  Show this help
+
+Environment values used with --yes (all optional):
+  AHUVA_HOST, AHUVA_ADMIN_USER, AHUVA_ADMIN_PASS, AHUVA_ADMIN_EMAIL, AHUVA_TIMEZONE
+EOF
+}
+
 # ---------------------------------------------------------------- arguments
 for arg in "$@"; do
     case "$arg" in
         -y|--yes) ASSUME_YES=1 ;;
         --no-web) SETUP_WEB=0 ;;
-        -h|--help) sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) usage; exit 0 ;;
         *) echo "Unknown option: $arg (use --help)"; exit 1 ;;
     esac
 done
+
+# ---------------------------------------------------------------- download
+# When started with "curl ... | sudo bash" (or from outside $INSTALL_DIR), download
+# the code first, then continue with the copy of this script inside $INSTALL_DIR.
+SELF_DIR=""
+if [ -n "${BASH_SOURCE[0]:-}" ] && [ -f "${BASH_SOURCE[0]}" ]; then
+    SELF_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
+fi
+INSTALL_REAL=$(cd "$INSTALL_DIR" 2>/dev/null && pwd -P || true)
+if [ -z "$SELF_DIR" ] || [ -z "$INSTALL_REAL" ] || [ "$SELF_DIR" != "$INSTALL_REAL" ]; then
+    [ "$(id -u)" -eq 0 ] || { echo "Please run as root:  curl -fsSL https://raw.githubusercontent.com/enoshvarma/NMS/main/install.sh | sudo bash"; exit 1; }
+    if [ -f "$INSTALL_DIR/artisan" ]; then
+        echo "Ahuva NMS is already downloaded in $INSTALL_DIR - continuing with the installer there."
+    else
+        if [ -e "$INSTALL_DIR" ] && [ -n "$(ls -A "$INSTALL_DIR" 2>/dev/null)" ]; then
+            echo "$INSTALL_DIR already exists and is not an Ahuva NMS folder. Move it away and run the installer again."
+            exit 1
+        fi
+        echo "Downloading Ahuva NMS to $INSTALL_DIR (this can take a few minutes)..."
+        export DEBIAN_FRONTEND=noninteractive
+        if ! command -v git >/dev/null 2>&1; then
+            apt-get update -qq >/dev/null 2>&1 || true
+            apt-get install -y -qq git ca-certificates >/dev/null \
+                || { echo "Could not install git. Check the internet connection and run the command again."; exit 1; }
+        fi
+        git clone --quiet --depth 1 "$REPO_URL" "$INSTALL_DIR" \
+            || { echo "Download failed. Check the internet connection and run the command again."; exit 1; }
+        echo "Download complete."
+    fi
+    # read answers from the keyboard even though the script itself came through a pipe
+    if ( : </dev/tty ) 2>/dev/null; then
+        exec bash "$INSTALL_DIR/install.sh" "$@" </dev/tty
+    fi
+    exec bash "$INSTALL_DIR/install.sh" "$@"
+fi
 
 # ---------------------------------------------------------------- banner
 cat <<EOF
@@ -114,7 +166,7 @@ step "Checking this server"
 : >>"$LOG" || die "Cannot write the log file $LOG"
 echo "---- Ahuva NMS install started $(date)" >>"$LOG"
 
-[ -f "$INSTALL_DIR/artisan" ] || die "Ahuva NMS code not found in $INSTALL_DIR. Clone the repository there first (see INSTALL.md)."
+[ -f "$INSTALL_DIR/artisan" ] || die "Ahuva NMS code not found in $INSTALL_DIR."
 
 # shellcheck disable=SC1091
 . /etc/os-release
@@ -167,7 +219,11 @@ ok "Settings saved - the rest is automatic (about 5-15 minutes)"
 # ---------------------------------------------------------------- 3. packages
 step "Installing system packages"
 export DEBIAN_FRONTEND=noninteractive
-run apt-get update
+apt_update() {
+    run apt-get update && return 0
+    warn "Some package sources on this server could not be refreshed (see the log). Continuing with the ones that work."
+}
+apt_update
 
 php_ok() { command -v php >/dev/null && php -r "exit(version_compare(PHP_VERSION, '$PHP_MIN', '>=') ? 0 : 1);"; }
 if php_ok; then
@@ -177,12 +233,12 @@ elif ! apt-cache show "php${PHP_PKG_VER}-cli" >/dev/null 2>&1; then
     info "Adding the PHP ${PHP_PKG_VER} package repository"
     run apt-get install -y ca-certificates curl gnupg lsb-release software-properties-common
     if [ "$ID" = ubuntu ]; then
-        run add-apt-repository -y ppa:ondrej/php
+        run add-apt-repository -y -n ppa:ondrej/php
     else
         run curl -fsSL -o /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg
         echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" >/etc/apt/sources.list.d/php-sury.list
     fi
-    run apt-get update
+    apt_update
 fi
 
 PHP_PKGS=""

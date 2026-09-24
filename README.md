@@ -16,15 +16,13 @@ Ahuva NMS is an auto-discovering network monitoring system. It discovers devices
 
 ## Installation
 
-Three commands on a fresh Ubuntu 24.04 server (full guide: [INSTALL.md](INSTALL.md)):
+One command on a fresh Ubuntu 24.04 server (full guide: [INSTALL.md](INSTALL.md)):
 
 ```bash
-sudo apt update && sudo apt install -y git
-sudo git clone https://YOUR_TOKEN@github.com/enoshvarma/NMS.git /opt/librenms
-sudo bash /opt/librenms/install.sh
+curl -fsSL https://raw.githubusercontent.com/enoshvarma/NMS/main/install.sh | sudo bash
 ```
 
-The installer sets up everything and prints the web address and admin login at the end.
+The installer asks five questions, sets up everything and prints the web address and admin login at the end.
 Automatic code updates are **off** by default; see INSTALL.md for how to update.
 
 ## Support
