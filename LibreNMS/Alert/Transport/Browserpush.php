@@ -60,7 +60,7 @@ class Browserpush extends Transport
                 [
                     'title' => 'User',
                     'name' => 'user',
-                    'descr' => 'LibreNMS User',
+                    'descr' => 'Ahuva NMS User',
                     'type' => 'select',
                     'options' => $users,
                 ],

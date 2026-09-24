@@ -77,7 +77,7 @@ class Glpi extends Transport
             'forcedisplay[1]=12&' .
             'criteria[0][field]=1&' .
             'criteria[0][searchtype]=contains&' .
-            'criteria[0][value]=^[LibreNMS: ' . $alert_data['sysName'] . '] ' . $alert_data['name'] . '$&' .
+            'criteria[0][value]=^[Ahuva NMS: ' . $alert_data['sysName'] . '] ' . $alert_data['name'] . '$&' .
             'criteria[1][link]=AND&' .
             'criteria[1][field]=12&' .
             'criteria[1][searchtype]=equals&' .
@@ -123,7 +123,7 @@ class Glpi extends Transport
             // Create the ticket
             $data = [
                 'input' => [
-                    'name' => '[LibreNMS: ' . $alert_data['sysName'] . '] ' . $alert_data['name'],
+                    'name' => '[Ahuva NMS: ' . $alert_data['sysName'] . '] ' . $alert_data['name'],
                     'content' => $alert_data['msg'],
                     '_users_id_requester' => $userID,
                 ],

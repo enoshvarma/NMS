@@ -134,7 +134,7 @@ class Msteams extends Transport
                         "type": "TextBlock",
                         "size": "Medium",
                         "weight": "Bolder",
-                        "text": "LibreNMS Test Adaptive Card"
+                        "text": "Ahuva NMS Test Adaptive Card"
                     },
                     {
                         "type": "TextBlock",

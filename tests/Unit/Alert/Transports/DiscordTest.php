@@ -63,7 +63,7 @@ final class DiscordTest extends TestCase
                 [
                     'embeds' => [
                         [
-                            'title' => '#000 Testing transport from LibreNMS',
+                            'title' => '#000 Testing transport from Ahuva NMS',
                             'color' => 16711680,
                             'description' => 'This is a test alert',
                             'fields' => [],
@@ -105,7 +105,7 @@ final class DiscordTest extends TestCase
                 [
                     'embeds' => [
                         [
-                            'title' => '#000 Testing transport from LibreNMS',
+                            'title' => '#000 Testing transport from Ahuva NMS',
                             'color' => 16711680,
                             'description' => 'This is a test alert',
                             'fields' => [],
@@ -147,7 +147,7 @@ final class DiscordTest extends TestCase
                 [
                     'embeds' => [
                         [
-                            'title' => '#000 Testing transport from LibreNMS',
+                            'title' => '#000 Testing transport from Ahuva NMS',
                             'color' => 16711680,
                             'description' => 'This is a test alert',
                             'fields' => [
@@ -200,7 +200,7 @@ final class DiscordTest extends TestCase
                     'content' => 'This is a text',
                     'embeds' => [
                         [
-                            'title' => '#000 Testing transport from LibreNMS',
+                            'title' => '#000 Testing transport from Ahuva NMS',
                             'color' => 16711680,
                             'description' => 'This test alert should not have image [Image 1] or html tags',
                             'fields' => [

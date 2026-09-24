@@ -94,7 +94,7 @@ class Sensu extends Transport
                     'namespace' => $namespace,
                     'annotations' => $this->generateAnnotations($alert_data),
                 ],
-                'command' => sprintf('LibreNMS: %s', $alert_data['builder']),
+                'command' => sprintf('Ahuva NMS: %s', $alert_data['builder']),
                 'executed' => time() - $offset,
                 'interval' => LibrenmsConfig::get('rrd.step', 300),
                 'issued' => time() - $offset,
@@ -117,7 +117,7 @@ class Sensu extends Transport
     private function generateAnnotations(array $alert_data): array
     {
         return array_filter([
-            'generated-by' => 'LibreNMS',
+            'generated-by' => 'Ahuva NMS',
             'acknowledged' => $alert_data['state'] === AlertState::ACKNOWLEDGED ? 'true' : 'false',
             'contact' => $alert_data['sysContact'],
             'description' => $alert_data['sysDescr'],

@@ -55,7 +55,7 @@ final class SignalgridTest extends TestCase
             && $request->data() === [
                 'client_key' => 'test-client-key',
                 'channel' => 'test-channel',
-                'title' => 'Testing transport from LibreNMS',
+                'title' => 'Testing transport from Ahuva NMS',
                 'body' => 'This is a test alert',
                 'type' => 'CRIT',
             ]);
@@ -82,7 +82,7 @@ final class SignalgridTest extends TestCase
         Http::assertSent(fn (Request $request) => $request->data() === [
             'client_key' => 'test-client-key',
             'channel' => 'test-channel',
-            'title' => 'Testing transport from LibreNMS',
+            'title' => 'Testing transport from Ahuva NMS',
             'body' => 'This is a test alert',
             'type' => 'WARN',
         ]);
@@ -109,7 +109,7 @@ final class SignalgridTest extends TestCase
         Http::assertSent(fn (Request $request) => $request->data() === [
             'client_key' => 'test-client-key',
             'channel' => 'test-channel',
-            'title' => 'Testing transport from LibreNMS',
+            'title' => 'Testing transport from Ahuva NMS',
             'body' => 'This is a test alert',
             'type' => 'SUCCESS',
         ]);

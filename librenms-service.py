@@ -11,7 +11,7 @@ import LibreNMS
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="LibreNMS Service - manages polling and other periodic processes"
+        description="Ahuva NMS Service - manages polling and other periodic processes"
     )
     parser.add_argument(
         "-g",
@@ -67,7 +67,7 @@ if __name__ == "__main__":
     else:
         logging.getLogger().setLevel(logging.WARNING)
 
-    info("Configuring LibreNMS service")
+    info("Configuring Ahuva NMS service")
     try:
         service = LibreNMS.Service()
     except Exception as e:
@@ -85,7 +85,7 @@ if __name__ == "__main__":
             service.config.group = [args.group]
 
     info(
-        "Entering main LibreNMS service loop on {}/{}...".format(
+        "Entering main Ahuva NMS service loop on {}/{}...".format(
             os.getpid(), threading.current_thread().name
         )
     )

@@ -162,7 +162,7 @@ if ($options['f'] === 'handle_notifiable') {
                 $eol_date = Php::PHP_MIN_VERSION_DATE;
 
                 Notifications::create($error_title,
-                    "PHP version $phpver is the minimum supported version as of $eol_date.  We recommend you update to PHP a supported version of PHP (" . Php::PHP_RECOMMENDED_VERSION . ' suggested) to continue to receive updates.  If you do not update PHP, LibreNMS will continue to function but stop receiving bug fixes and updates.',
+                    "PHP version $phpver is the minimum supported version as of $eol_date.  We recommend you update to PHP a supported version of PHP (" . Php::PHP_RECOMMENDED_VERSION . ' suggested) to continue to receive updates.  If you do not update PHP, Ahuva NMS will continue to function but stop receiving bug fixes and updates.',
                     'daily.sh',
                     2
                 );
@@ -179,7 +179,7 @@ if ($options['f'] === 'handle_notifiable') {
         if (LibrenmsConfig::get('update') && $options['r']) {
             if ($options['r'] === 'python3-missing') {
                 Notifications::create($error_title,
-                    'Python 3 is required to run LibreNMS as of May, 2020. You need to install Python 3 to continue to receive updates.  If you do not install Python 3 and required packages, LibreNMS will continue to function but stop receiving bug fixes and updates.',
+                    'Python 3 is required to run Ahuva NMS as of May, 2020. You need to install Python 3 to continue to receive updates.  If you do not install Python 3 and required packages, Ahuva NMS will continue to function but stop receiving bug fixes and updates.',
                     'daily.sh',
                     2
                 );
@@ -297,7 +297,7 @@ if ($options['f'] === 'refresh_device_groups') {
 if ($options['f'] === 'notify') {
     if (\App\Facades\LibrenmsConfig::has('alert.default_mail')) {
         try {
-            \LibreNMS\Util\Mail::send(\App\Facades\LibrenmsConfig::get('alert.default_mail'), '[LibreNMS] Auto update has failed for ' . LibrenmsConfig::get('distributed_poller_name'), "We just attempted to update your install but failed. The information below should help you fix this.\r\n\r\n" . $options['o'], false);
+            \LibreNMS\Util\Mail::send(\App\Facades\LibrenmsConfig::get('alert.default_mail'), '[Ahuva NMS] Auto update has failed for ' . LibrenmsConfig::get('distributed_poller_name'), "We just attempted to update your install but failed. The information below should help you fix this.\r\n\r\n" . $options['o'], false);
         } catch (Exception $e) {
             echo 'Failed to send update failed email. ' . $e->getMessage();
         }

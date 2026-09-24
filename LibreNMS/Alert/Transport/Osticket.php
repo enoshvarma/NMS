@@ -34,7 +34,7 @@ class Osticket extends Transport
         }
 
         $protocol = [
-            'name' => 'LibreNMS',
+            'name' => 'Ahuva NMS',
             'email' => $email,
             'subject' => ($alert_data['name'] ? $alert_data['name'] . ' on ' . $alert_data['hostname'] : $alert_data['title']),
             'message' => strip_tags((string) $alert_data['msg']),

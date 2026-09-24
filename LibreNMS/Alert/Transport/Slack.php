@@ -96,7 +96,7 @@ class Slack extends Transport
                     'name' => 'slack-author',
                     'descr' => 'Name of author',
                     'type' => 'text',
-                    'default' => 'LibreNMS',
+                    'default' => 'Ahuva NMS',
                 ],
                 [
                     'title' => 'Icon',

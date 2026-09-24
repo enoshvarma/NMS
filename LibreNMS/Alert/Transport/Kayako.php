@@ -35,7 +35,7 @@ class Kayako extends Transport
 
         $protocol = [
             'subject' => ($alert_data['name'] ? $alert_data['name'] . ' on ' . $alert_data['hostname'] : $alert_data['title']),
-            'fullname' => 'LibreNMS Alert',
+            'fullname' => 'Ahuva NMS Alert',
             'email' => $user,
             'contents' => strip_tags((string) $alert_data['msg']),
             'departmentid' => $department,

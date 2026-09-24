@@ -21,7 +21,7 @@ class ConfigureArtisanConsole
     public function handle(ArtisanStarting $event): void
     {
         $console = $event->artisan;
-        $console->setName('LibreNMS');
+        $console->setName('Ahuva NMS');
         $console->setVersion(Version::VERSION);
     }
 }

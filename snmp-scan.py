@@ -295,7 +295,7 @@ Example: 192.168.0.1/32 will be treated as a single host address""",
     # make sure we have something to scan
     if not CONFIG.get("nets", []) and not netargs:
         parser.error(
-            "'nets' is not set in your LibreNMS config, you must specify a network to scan"
+            "'nets' is not set in your Ahuva NMS config, you must specify a network to scan"
         )
 
     # check for valid networks

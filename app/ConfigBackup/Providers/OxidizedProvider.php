@@ -184,7 +184,7 @@ class OxidizedProvider implements ConfigBackupProvider, RefreshableConfigBackupP
         $node = $this->resolveNode($device);
         $hostname = is_array($node) ? ($node['name'] ?? $device->hostname) : $device->hostname;
 
-        return $this->api->updateNode($hostname, 'LibreNMS GUI refresh', $requestedBy);
+        return $this->api->updateNode($hostname, 'Ahuva NMS GUI refresh', $requestedBy);
     }
 
     /**

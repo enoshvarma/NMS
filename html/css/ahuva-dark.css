@@ -13,19 +13,21 @@
 }
 
 /* Theme-aware logo artwork */
+.ahuva-on-light { display: inline-block; }
 .ahuva-on-dark { display: none !important; }
 .dark .ahuva-on-light { display: none !important; }
 .dark .ahuva-on-dark { display: inline-block !important; }
 
 .ahuva-logo {
     height: 100%;
+    max-width: none !important;
     white-space: nowrap;
     vertical-align: middle;
 }
 
 .ahuva-logo img {
     height: 100%;
-    max-height: 34px;
+    max-height: 30px;
     width: auto;
     vertical-align: middle;
 }
@@ -144,4 +146,10 @@
 .dark .form-control:focus {
     border-color: var(--ahuva-accent);
     box-shadow: 0 0 0 2px rgba(34, 195, 230, 0.25);
+}
+
+.dark pre {
+    background-color: var(--ahuva-surface);
+    border-color: var(--ahuva-border);
+    color: #d1d5db;
 }

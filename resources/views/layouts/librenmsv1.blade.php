@@ -46,7 +46,7 @@
     @foreach(LibrenmsConfig::get('webui.custom_css', []) as $custom_css)
         <link href="{{ $custom_css }}" rel="stylesheet">
     @endforeach
-    <link href="{{ asset('css/ahuva-dark.css?ver=1') }}" rel="stylesheet">
+    <link href="{{ asset('css/ahuva-dark.css?ver=2') }}" rel="stylesheet">
     @yield('css')
     @stack('styles')
 

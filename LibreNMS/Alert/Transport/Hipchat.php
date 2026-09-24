@@ -68,7 +68,7 @@ class Hipchat extends Transport
 
         $data = [
             'message' => $alert_data['msg'],
-            'from' => $this->config['hipchat-from-name'] ?: 'LibreNMS',
+            'from' => $this->config['hipchat-from-name'] ?: 'Ahuva NMS',
             'color' => $color,
             'notify' => $options['notify'] ?? '1',
             'message_format' => $options['message_format'] ?: 'text',

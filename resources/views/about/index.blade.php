@@ -151,7 +151,7 @@
 
         <h3>{{ __('License') }}</h3>
         <pre>
-Ahuva NMS: Copyright (C) 2026-{{ date('Y') }} Ahuva Enosh Varma
+Ahuva NMS: Copyright (C) 2026{{ date('Y') > 2026 ? '-' . date('Y') : '' }} Ahuva Enosh Varma
 Portions: Copyright (C) 2006-{{ date('Y') }} their respective authors
 (see AUTHORS.md and LICENSE.txt in the installation directory)
 

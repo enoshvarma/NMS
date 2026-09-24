@@ -49,7 +49,7 @@ class LibrenmsConfig extends Facade
         self::invalidateCache();
         self::reload();
 
-        Log::info('LibreNMS config cache cleared and config reloaded.');
+        Log::info('Ahuva NMS config cache cleared and config reloaded.');
     }
 
     public static function reloadDefaults(): void

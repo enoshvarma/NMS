@@ -58,7 +58,7 @@ final class SlackTest extends TestCase
                 [
                     'fallback' => 'This is a test alert',
                     'color' => '#ff0000',
-                    'title' => 'Testing transport from LibreNMS',
+                    'title' => 'Testing transport from Ahuva NMS',
                     'text' => 'This is a test alert',
                     'mrkdwn_in' => [
                         'text',
@@ -95,7 +95,7 @@ final class SlackTest extends TestCase
                 [
                     'fallback' => 'This is a test alert',
                     'color' => '#ff0000',
-                    'title' => 'Testing transport from LibreNMS',
+                    'title' => 'Testing transport from Ahuva NMS',
                     'text' => 'This is a test alert',
                     'mrkdwn_in' => [
                         'text',
@@ -135,7 +135,7 @@ final class SlackTest extends TestCase
                 [
                     'fallback' => 'This is a test alert',
                     'color' => '#ff0000',
-                    'title' => 'Testing transport from LibreNMS',
+                    'title' => 'Testing transport from Ahuva NMS',
                     'text' => 'This is a test alert',
                     'mrkdwn_in' => [
                         'text',

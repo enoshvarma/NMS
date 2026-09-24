@@ -31,7 +31,7 @@ final class ProxyTest extends TestCase
 {
     public function testClientAgentIsCorrect(): void
     {
-        $this->assertEquals('LibreNMS/' . Version::VERSION, Http::client()->getOptions()['headers']['User-Agent']);
+        $this->assertEquals('Ahuva NMS/' . Version::VERSION, Http::client()->getOptions()['headers']['User-Agent']);
     }
 
     public function testProxyIsNotSet(): void

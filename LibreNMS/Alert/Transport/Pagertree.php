@@ -95,7 +95,7 @@ class Pagertree extends Transport
         $event = [
             'event_type' => 'create',
             'Id' => $test_id,
-            'Title' => 'LibreNMS PagerTree Test Alert',
+            'Title' => 'Ahuva NMS PagerTree Test Alert',
             'Description' => 'Testing PagerTree Transport',
         ];
 
