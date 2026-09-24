@@ -41,7 +41,7 @@ Artisan::command('device:rename
 
 Artisan::command('update', function (): void {
     (new Process([base_path('daily.sh')]))->setTimeout(null)->setIdleTimeout(null)->setTty(true)->run();
-})->purpose(__('Update LibreNMS and run maintenance routines'));
+})->purpose(__('Update Ahuva NMS and run maintenance routines'));
 
 Artisan::command('poller:ping
     {groups?* : ' . __('Optional List of distributed poller groups to poll') . '}
@@ -101,7 +101,7 @@ Artisan::command('poller:services
         }
     }
     (new Process($command))->setTimeout(null)->setIdleTimeout(null)->setTty(true)->run();
-})->purpose(__('Update LibreNMS and run maintenance routines'));
+})->purpose(__('Update Ahuva NMS and run maintenance routines'));
 
 Artisan::command('poller:billing-calculate
     {--c|clear-history : ' . __('Delete all billing history') . '}
@@ -171,7 +171,7 @@ Artisan::command('scan
     }
 
     return $scan_process->getExitCode();
-})->purpose(__('Scan the network for hosts and try to add them to LibreNMS'));
+})->purpose(__('Scan the network for hosts and try to add them to Ahuva NMS'));
 
 // mark schedule working
 Schedule::call(function (): void {
