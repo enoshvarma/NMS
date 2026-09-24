@@ -60,10 +60,11 @@ class Updates extends BaseValidation
             return;
         }
 
-        // check if users on master update channel are up to date
-        if (LibrenmsConfig::get('update_channel') == 'master') {
+        // check if users on master update channel are up to date (only when automatic updates are enabled)
+        if (LibrenmsConfig::get('update') && LibrenmsConfig::get('update_channel') == 'master') {
             $git = Git::make();
-            if ($git->commitHash() != $git->remoteHash()) {
+            $remote_hash = $git->remoteHash();
+            if ($remote_hash !== '' && $git->commitHash() != $remote_hash) {
                 if (! $git->commitDate()) {
                     $process = new Process(['git', 'show', '--quiet', '--pretty=%H|%ct'], base_path());
                     $process->run();

@@ -175,9 +175,10 @@ class Git
     private function remoteCommit(): array
     {
         return $this->cacheGet('remoteCommit', function () {
-            if ($this->isAvailable()) {
+            $github_api = (string) LibrenmsConfig::get('github_api');
+            if ($github_api !== '' && $this->isAvailable()) {
                 try {
-                    return (array) Http::client()->get(LibrenmsConfig::get('github_api') . 'commits/master')->json();
+                    return (array) Http::client()->get($github_api . 'commits/master')->json();
                 } catch (ConnectionException) {
                 }
             }

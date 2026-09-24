@@ -38,7 +38,7 @@ class Stats
     {
         $stats = new static;
 
-        if ($stats->isEnabled()) {
+        if ($stats->isEnabled() && \App\Facades\LibrenmsConfig::get('callback_post')) {
             Http::client()
                 ->asForm()
                 ->post(\App\Facades\LibrenmsConfig::get('callback_post'), [
@@ -68,6 +68,13 @@ class Stats
     public function clearStats(): void
     {
         $uuid = Callback::get('uuid');
+
+        if (! \App\Facades\LibrenmsConfig::get('callback_clear')) {
+            Callback::where('name', 'uuid')->delete();
+            Callback::set('enabled', 0);
+
+            return;
+        }
 
         $response = Http::client()
             ->asForm()

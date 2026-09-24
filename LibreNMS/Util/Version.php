@@ -202,7 +202,7 @@ class Version
     public static function registerAboutCommand(): void
     {
         // spaces affect sorting, but not output
-        AboutCommand::add('LibreNMS', fn () => [
+        AboutCommand::add('Ahuva NMS', fn () => [
             '  Version' => Version::get()->name(),
             ' Last Update' => Version::get()->date(),
             ' Update Channel' => Version::get()->release(),
@@ -229,7 +229,7 @@ class Version
 ===========================================
 Component | Version
 --------- | -------
-LibreNMS  | %s (%s)
+Ahuva NMS | %s (%s)
 DB Schema | %s (%s)
 PHP       | %s
 Python    | %s

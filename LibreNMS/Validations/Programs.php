@@ -105,7 +105,7 @@ class Programs extends BaseValidation
         );
 
         if ($getcap = $this->findExecutable('getcap')) {
-            $getcap_out = shell_exec("$getcap $cmd");
+            $getcap_out = (string) shell_exec("$getcap $cmd");
             preg_match("#^$cmd (.*)$#", $getcap_out, $matches);
 
             if (empty($matches) || ! Str::contains($matches[1], ['cap_net_raw+ep', 'cap_net_raw=ep'])) {
@@ -121,12 +121,12 @@ class Programs extends BaseValidation
 
     public function findExecutable($bin)
     {
-        if (is_executable(LibrenmsConfig::get($bin))) {
+        if (is_executable((string) LibrenmsConfig::get($bin))) {
             return LibrenmsConfig::get($bin);
         }
 
         $located = LibrenmsConfig::locateBinary($bin);
-        if (is_executable($located)) {
+        if (is_executable((string) $located)) {
             return $located;
         }
 

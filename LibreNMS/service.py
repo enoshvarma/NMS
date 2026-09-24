@@ -511,7 +511,7 @@ class Service:
         if self.config.watchdog_enabled:
             self.watchdog_timer.start()
 
-        logger.info("LibreNMS Service: {} started!".format(self.config.unique_name))
+        logger.info("Ahuva NMS Service: {} started!".format(self.config.unique_name))
         logger.info(
             "Poller group {}. Using Python {} and {} locks and queues".format(
                 "0 (default)" if self.config.group == [0] else self.config.group,

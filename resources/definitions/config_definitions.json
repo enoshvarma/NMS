@@ -1307,11 +1307,11 @@
             }
         },
         "callback_clear": {
-            "default": "https://stats.librenms.org/clear.php",
+            "default": "",
             "type": "text"
         },
         "callback_post": {
-            "default": "https://stats.librenms.org/log.php",
+            "default": "",
             "type": "text"
         },
         "callback_proxy": {
@@ -2689,7 +2689,7 @@
             }
         },
         "github_api": {
-            "default": "https://api.github.com/repos/librenms/librenms/",
+            "default": "",
             "type": "text"
         },
         "good_if": {

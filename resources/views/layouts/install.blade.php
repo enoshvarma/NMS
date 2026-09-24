@@ -12,13 +12,13 @@
     <script src="{{ asset('js/clipboard.min.js') }}"></script>
     <style>
         body {
-            background-color: #046C8B;
+            background-color: #0f1115;
         }
 
         .primary-panel {
             padding: 0;
             border: 0;
-            box-shadow: 3px 3px 30px #222;
+            box-shadow: 0 0 30px #000;
             min-height: 540px;
         }
 
@@ -42,8 +42,8 @@
 
         .btn-circle.disabled {
             opacity: 1;
-            background-color: #62bcca;
-            border-color: #64c0ce;
+            background-color: #5dd6f0;
+            border-color: #22c3e6;
         }
         .btn-circle.btn-outline-info:not(:hover) {
             background-color: white;
@@ -69,7 +69,7 @@
         }
 
         .install-progress.complete {
-            background-color: #db202e;
+            background-color: #22c3e6;
         }
 
         #step-title {
