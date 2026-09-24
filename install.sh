@@ -170,10 +170,13 @@ echo "---- Ahuva NMS install started $(date)" >>"$LOG"
 
 # shellcheck disable=SC1091
 . /etc/os-release
-case "${ID}:${VERSION_ID}" in
-    ubuntu:22.04|ubuntu:24.04|debian:12|debian:13) ok "Operating system: $PRETTY_NAME" ;;
-    *) die "Unsupported operating system: ${PRETTY_NAME:-unknown}. Use Ubuntu 24.04 (recommended), Ubuntu 22.04 or Debian 12." ;;
+os_ok=0
+case "${ID:-}" in
+    ubuntu) dpkg --compare-versions "${VERSION_ID:-0}" ge 22.04 && os_ok=1 ;;
+    debian) dpkg --compare-versions "${VERSION_ID:-0}" ge 12 && os_ok=1 ;;
 esac
+[ "$os_ok" = 1 ] || die "Unsupported operating system: ${PRETTY_NAME:-unknown}. Use Ubuntu 22.04 or newer (24.04 recommended) or Debian 12 or newer."
+ok "Operating system: $PRETTY_NAME"
 
 mem_mb=$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo)
 [ "$mem_mb" -ge 1800 ] && ok "Memory: ${mem_mb} MB" || warn "Only ${mem_mb} MB RAM. 2 GB or more is recommended."
@@ -191,9 +194,11 @@ fi
 
 # ---------------------------------------------------------------- 2. questions
 step "A few questions (press Enter to accept the value in [brackets])"
-default_host=$(hostname -I 2>/dev/null | awk '{print $1}')
+default_host=$(hostname -I 2>/dev/null | awk '{print $1}' || true)
 default_host=${default_host:-$(hostname -f 2>/dev/null || hostname)}
-default_tz=$( (timedatectl show -p Timezone --value 2>/dev/null || cat /etc/timezone 2>/dev/null) | head -n1)
+default_tz=$(timedatectl show -p Timezone --value 2>/dev/null || true)
+[ -n "$default_tz" ] || default_tz=$(cat /etc/timezone 2>/dev/null || true)
+[ -n "$default_tz" ] || default_tz=$(readlink -f /etc/localtime 2>/dev/null | sed -n 's#.*/zoneinfo/##p' || true)
 [ -z "$default_tz" ] || [ "$default_tz" = "Etc/UTC" ] && default_tz=Asia/Kolkata
 
 ask HOST        "Server IP address or name users will open in the browser" "${AHUVA_HOST:-$default_host}"
@@ -213,7 +218,9 @@ else
 fi
 ask ADMIN_EMAIL "Admin email (optional)"                                    "${AHUVA_ADMIN_EMAIL:-}"
 ask TIMEZONE    "Timezone"                                                  "${AHUVA_TIMEZONE:-$default_tz}"
-[ -f "/usr/share/zoneinfo/$TIMEZONE" ] || die "Unknown timezone '$TIMEZONE'. Example: Asia/Kolkata"
+if [ -d /usr/share/zoneinfo ] && [ ! -f "/usr/share/zoneinfo/$TIMEZONE" ]; then
+    die "Unknown timezone '$TIMEZONE'. Example: Asia/Kolkata"
+fi
 ok "Settings saved - the rest is automatic (about 5-15 minutes)"
 
 # ---------------------------------------------------------------- 3. packages
@@ -226,35 +233,62 @@ apt_update() {
 apt_update
 
 php_ok() { command -v php >/dev/null && php -r "exit(version_compare(PHP_VERSION, '$PHP_MIN', '>=') ? 0 : 1);"; }
+pkg_available() { apt-cache show "$1" >/dev/null 2>&1; }
+# PHP version to install: the distribution default if new enough, otherwise the newest available >= $PHP_MIN
+pick_php_version() {
+    local def v best=""
+    def=$(apt-cache depends php-cli 2>/dev/null | sed -n 's/.*Depends: php\([0-9][0-9]*\.[0-9][0-9]*\)-cli.*/\1/p' | head -n1 || true)
+    if [ -n "$def" ] && dpkg --compare-versions "$def" ge "$PHP_MIN" && pkg_available "php${def}-cli"; then
+        echo "$def"; return
+    fi
+    for v in $(apt-cache pkgnames php 2>/dev/null | sed -n 's/^php\([0-9][0-9]*\.[0-9][0-9]*\)-cli$/\1/p' | sort -V); do
+        dpkg --compare-versions "$v" ge "$PHP_MIN" && best=$v
+    done
+    echo "$best"
+}
+
 if php_ok; then
     PHP_PKG_VER=$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')
     ok "PHP $(php -r 'echo PHP_VERSION;') already installed"
-elif ! apt-cache show "php${PHP_PKG_VER}-cli" >/dev/null 2>&1; then
-    info "Adding the PHP ${PHP_PKG_VER} package repository"
-    run apt-get install -y ca-certificates curl gnupg lsb-release software-properties-common
-    if [ "$ID" = ubuntu ]; then
-        run add-apt-repository -y -n ppa:ondrej/php
-    else
-        run curl -fsSL -o /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg
-        echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" >/etc/apt/sources.list.d/php-sury.list
+else
+    PHP_PKG_VER=$(pick_php_version)
+    if [ -z "$PHP_PKG_VER" ]; then
+        info "Adding the PHP package repository (this Linux version ships an older PHP)"
+        run apt-get install -y ca-certificates curl gnupg lsb-release software-properties-common
+        if [ "$ID" = ubuntu ]; then
+            run add-apt-repository -y -n ppa:ondrej/php
+        else
+            run curl -fsSL -o /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg
+            echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" >/etc/apt/sources.list.d/php-sury.list
+        fi
+        apt_update
+        PHP_PKG_VER=$(pick_php_version)
     fi
-    apt_update
+    [ -n "$PHP_PKG_VER" ] || die "PHP $PHP_MIN or newer is not available for $PRETTY_NAME."
+    info "Using PHP $PHP_PKG_VER"
 fi
 
 PHP_PKGS=""
-for ext in cli curl gd gmp mbstring mysql snmp xml zip; do PHP_PKGS="$PHP_PKGS php${PHP_PKG_VER}-${ext}"; done
+for ext in cli curl gd mbstring mysql xml zip; do PHP_PKGS="$PHP_PKGS php${PHP_PKG_VER}-${ext}"; done
 [ "$SETUP_WEB" = 1 ] && PHP_PKGS="$PHP_PKGS php${PHP_PKG_VER}-fpm"
+for ext in gmp snmp; do pkg_available "php${PHP_PKG_VER}-${ext}" && PHP_PKGS="$PHP_PKGS php${PHP_PKG_VER}-${ext}"; done
 # skip PHP packages that are compiled in when PHP was not installed from packages
 if php_ok && ! dpkg -s "php${PHP_PKG_VER}-cli" >/dev/null 2>&1; then
-    need=""; for p in $PHP_PKGS; do apt-cache show "$p" >/dev/null 2>&1 && need="$need $p"; done; PHP_PKGS=$need
+    need=""; for p in $PHP_PKGS; do pkg_available "$p" && need="$need $p"; done; PHP_PKGS=$need
 fi
 
-BASE_PKGS="acl cron curl fping git graphviz imagemagick logrotate mariadb-client mariadb-server mtr-tiny nmap \
-python3-dotenv python3-pymysql python3-redis python3-setuptools python3-psutil python3-pip \
-rrdtool snmp snmpd unzip whois"
-apt-cache show python3-command-runner >/dev/null 2>&1 && BASE_PKGS="$BASE_PKGS python3-command-runner"
-apt-cache show python3-systemd >/dev/null 2>&1 && BASE_PKGS="$BASE_PKGS python3-systemd"
-[ "$SETUP_WEB" = 1 ] && BASE_PKGS="$BASE_PKGS nginx"
+# required packages must exist; optional ones are skipped when this Linux version does not have them
+BASE_PKGS=""
+missing_pkgs=""
+for p in acl cron curl fping git logrotate mariadb-client mariadb-server python3-dotenv python3-pymysql \
+         python3-redis python3-psutil python3-pip rrdtool snmp snmpd tzdata unzip; do
+    if pkg_available "$p"; then BASE_PKGS="$BASE_PKGS $p"; else missing_pkgs="$missing_pkgs $p"; fi
+done
+[ "$SETUP_WEB" = 1 ] && { if pkg_available nginx; then BASE_PKGS="$BASE_PKGS nginx"; else missing_pkgs="$missing_pkgs nginx"; fi; }
+[ -z "$missing_pkgs" ] || die "These required packages are not available on this server:$missing_pkgs"
+for p in graphviz imagemagick mtr-tiny nmap whois python3-setuptools python3-command-runner python3-systemd; do
+    pkg_available "$p" && BASE_PKGS="$BASE_PKGS $p"
+done
 
 # shellcheck disable=SC2086
 run apt-get install -y $BASE_PKGS || die "Installing system packages failed. Check the internet connection and run the installer again."
@@ -264,11 +298,13 @@ ok "System packages installed"
 if ! run apt-get install -y $PHP_PKGS; then
     php_ok || die "Installing PHP $PHP_PKG_VER failed. Check the internet connection and run the installer again."
     missing=""
-    for mod in curl gd mbstring mysqli pdo_mysql xml zip; do php -m | grep -qix "$mod" || missing="$missing $mod"; done
+    for mod in curl gd mbstring mysqli pdo_mysql xml zip; do php -m | grep -ix "$mod" >/dev/null || missing="$missing $mod"; done
     [ -z "$missing" ] || die "Installing PHP packages failed and these PHP modules are missing:$missing"
     [ "$SETUP_WEB" = 0 ] || [ -d "/etc/php/$PHP_PKG_VER/fpm" ] || die "Installing php${PHP_PKG_VER}-fpm failed."
     warn "Some optional PHP packages could not be installed; the required PHP modules are present, continuing."
 fi
+# make "php" point at the version we installed when several PHP versions are present
+[ -x "/usr/bin/php${PHP_PKG_VER}" ] && run update-alternatives --set php "/usr/bin/php${PHP_PKG_VER}" || true
 php_ok || die "PHP $PHP_MIN or newer is required but $(php -r 'echo PHP_VERSION;' 2>/dev/null || echo 'none') is installed."
 ok "PHP $(php -r 'echo PHP_VERSION;') ready"
 
@@ -289,6 +325,7 @@ ok "Permissions set"
 
 # ---------------------------------------------------------------- 5. timezone
 step "Setting timezone to $TIMEZONE"
+[ -f "/usr/share/zoneinfo/$TIMEZONE" ] || die "Unknown timezone '$TIMEZONE'. Example: Asia/Kolkata"
 if has_systemd && command -v timedatectl >/dev/null; then run timedatectl set-timezone "$TIMEZONE" || true; fi
 ln -sf "/usr/share/zoneinfo/$TIMEZONE" /etc/localtime
 echo "$TIMEZONE" >/etc/timezone
@@ -323,8 +360,20 @@ ok "Database 'librenms' ready"
 
 # ---------------------------------------------------------------- 7. application
 step "Installing Ahuva NMS application files (this is the longest step)"
-if command -v composer >/dev/null 2>&1; then COMPOSER_CMD="COMPOSER_ALLOW_SUPERUSER=0 composer"; else COMPOSER_CMD="./scripts/composer_wrapper.php"; fi
-as_nms "$COMPOSER_CMD install --no-dev --no-interaction --no-progress" || die "Downloading the PHP components failed. Check the internet connection and run the installer again."
+composer_install() {
+    if command -v composer >/dev/null 2>&1; then
+        as_nms "composer install --no-dev --no-interaction --no-progress" && return 0
+    else
+        as_nms "./scripts/composer_wrapper.php install --no-dev --no-interaction --no-progress" && return 0
+        # the composer download site can be blocked on some networks - fall back to the distribution package
+        info "Installing composer from the system packages"
+        run apt-get install -y composer || return 1
+        [ -x "/usr/bin/php${PHP_PKG_VER}" ] && run update-alternatives --set php "/usr/bin/php${PHP_PKG_VER}" || true
+        as_nms "composer install --no-dev --no-interaction --no-progress" && return 0
+    fi
+    return 1
+}
+composer_install || die "Downloading the PHP components failed. Check the internet connection and run the installer again."
 ok "PHP components installed"
 
 as_nms "python3 -m pip install --user -r requirements.txt --break-system-packages" \
@@ -350,7 +399,7 @@ if as_nms "php lnms user:add --password='$ADMIN_PASS' --role=admin $EMAIL_ARG '$
     ok "Admin user '$ADMIN_USER' created"
 else
     warn "Admin user '$ADMIN_USER' already exists - its password was not changed."
-    old_pass=$(sed -n 's/^Admin password: //p' "$CRED_FILE" 2>/dev/null | head -n1)
+    old_pass=$(sed -n 's/^Admin password: //p' "$CRED_FILE" 2>/dev/null | head -n1 || true)
     ADMIN_PASS=${old_pass:-"(unchanged - existing user)"}
 fi
 as_nms "php lnms config:set base_url 'http://$HOST/'" || true
@@ -406,7 +455,7 @@ EOF
     rm -f /etc/nginx/sites-enabled/default
     run nginx -t || die "The web server configuration test failed."
     svc_enable_start nginx
-    if command -v ufw >/dev/null && ufw status 2>/dev/null | grep -q "Status: active"; then
+    if command -v ufw >/dev/null && ufw status 2>/dev/null | grep "Status: active" >/dev/null; then
         run ufw allow 80/tcp; ok "Firewall: opened port 80"
     fi
     ok "Nginx and PHP-FPM configured"
@@ -451,7 +500,7 @@ as_nms "php lnms config:set snmp.community.+ '$SNMP_COMMUNITY'" || true
 # Net-SNMP needs up to a minute after (re)starting before it reports CPU load
 info "Waiting for SNMP to be ready (up to 2 minutes)"
 for _ in $(seq 1 24); do
-    snmpwalk -v2c -c "$SNMP_COMMUNITY" -On -t 2 -r 1 127.0.0.1 1.3.6.1.2.1.25.3.3.1.2 2>/dev/null | grep -q INTEGER && break
+    snmpwalk -v2c -c "$SNMP_COMMUNITY" -On -t 2 -r 1 127.0.0.1 1.3.6.1.2.1.25.3.3.1.2 2>/dev/null | grep INTEGER >/dev/null && break
     sleep 5
 done
 if as_nms "php lnms device:add --v2c -c '$SNMP_COMMUNITY' 127.0.0.1"; then

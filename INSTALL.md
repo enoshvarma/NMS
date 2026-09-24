@@ -9,7 +9,7 @@ Support: Enosh Varma – varmaenosh@gmail.com
 
 | | |
 |---|---|
-| **Server** | A fresh **Ubuntu 24.04** server (Ubuntu 22.04 and Debian 12 also work) |
+| **Server** | A fresh **Ubuntu 24.04 or 26.04** server (Ubuntu 22.04 and Debian 12 also work) |
 | **Size** | 2 CPU, 2 GB RAM, 20 GB disk or more (4 CPU / 8 GB / 100 GB for 200+ devices) |
 | **Network** | A fixed IP address and internet access |
 | **Access** | A user with `sudo` rights |

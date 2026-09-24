@@ -16,7 +16,7 @@ Ahuva NMS is an auto-discovering network monitoring system. It discovers devices
 
 ## Installation
 
-One command on a fresh Ubuntu 24.04 server (full guide: [INSTALL.md](INSTALL.md)):
+One command on a fresh Ubuntu 24.04 or 26.04 server (full guide: [INSTALL.md](INSTALL.md)):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/enoshvarma/NMS/main/install.sh | sudo bash
