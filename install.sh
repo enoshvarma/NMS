@@ -122,7 +122,9 @@ INSTALL_REAL=$(cd "$INSTALL_DIR" 2>/dev/null && pwd -P || true)
 if [ -z "$SELF_DIR" ] || [ -z "$INSTALL_REAL" ] || [ "$SELF_DIR" != "$INSTALL_REAL" ]; then
     [ "$(id -u)" -eq 0 ] || { echo "Please run as root:  curl -fsSL https://raw.githubusercontent.com/enoshvarma/NMS/main/install.sh | sudo bash"; exit 1; }
     if [ -f "$INSTALL_DIR/artisan" ]; then
-        echo "Ahuva NMS is already downloaded in $INSTALL_DIR - continuing with the installer there."
+        echo "Ahuva NMS is already downloaded in $INSTALL_DIR - updating it and continuing."
+        git -C "$INSTALL_DIR" -c safe.directory="$INSTALL_DIR" pull --quiet --ff-only >/dev/null 2>&1 \
+            || echo "Note: could not update $INSTALL_DIR. If the installer fails, remove it (rm -rf $INSTALL_DIR) and run the install command again."
     else
         if [ -e "$INSTALL_DIR" ] && [ -n "$(ls -A "$INSTALL_DIR" 2>/dev/null)" ]; then
             echo "$INSTALL_DIR already exists and is not an Ahuva NMS folder. Move it away and run the installer again."
@@ -217,10 +219,20 @@ else
     done
 fi
 ask ADMIN_EMAIL "Admin email (optional)"                                    "${AHUVA_ADMIN_EMAIL:-}"
-ask TIMEZONE    "Timezone"                                                  "${AHUVA_TIMEZONE:-$default_tz}"
-if [ -d /usr/share/zoneinfo ] && [ ! -f "/usr/share/zoneinfo/$TIMEZONE" ]; then
-    die "Unknown timezone '$TIMEZONE'. Example: Asia/Kolkata"
-fi
+# find the correctly spelled timezone name, ignoring upper/lower case (asia/kolkata -> Asia/Kolkata)
+fix_tz() {
+    [ -d /usr/share/zoneinfo ] || { printf '%s' "$1"; return; }
+    [ -f "/usr/share/zoneinfo/$1" ] && { printf '%s' "$1"; return; }
+    (cd /usr/share/zoneinfo && find . -type f ! -path './posix/*' ! -path './right/*' | sed 's#^\./##' | grep -ixF -- "$1" | head -n1) || true
+}
+tz_default="${AHUVA_TIMEZONE:-$default_tz}"
+while :; do
+    ask TIMEZONE "Timezone" "$tz_default"
+    TIMEZONE=$(fix_tz "$(printf '%s' "$TIMEZONE" | tr -d '[:space:]')")
+    [ -n "$TIMEZONE" ] && break
+    if [ "$ASSUME_YES" = 1 ] || [ ! -t 0 ]; then die "Unknown timezone '$tz_default'. Example: Asia/Kolkata"; fi
+    echo "  Unknown timezone. Examples: Asia/Kolkata, Asia/Dubai, Europe/London, America/New_York"
+done
 ok "Settings saved - the rest is automatic (about 5-15 minutes)"
 
 # ---------------------------------------------------------------- 3. packages
@@ -325,7 +337,8 @@ ok "Permissions set"
 
 # ---------------------------------------------------------------- 5. timezone
 step "Setting timezone to $TIMEZONE"
-[ -f "/usr/share/zoneinfo/$TIMEZONE" ] || die "Unknown timezone '$TIMEZONE'. Example: Asia/Kolkata"
+TIMEZONE=$(fix_tz "$TIMEZONE")
+[ -n "$TIMEZONE" ] && [ -f "/usr/share/zoneinfo/$TIMEZONE" ] || die "Unknown timezone. Example: Asia/Kolkata"
 if has_systemd && command -v timedatectl >/dev/null; then run timedatectl set-timezone "$TIMEZONE" || true; fi
 ln -sf "/usr/share/zoneinfo/$TIMEZONE" /etc/localtime
 echo "$TIMEZONE" >/etc/timezone
